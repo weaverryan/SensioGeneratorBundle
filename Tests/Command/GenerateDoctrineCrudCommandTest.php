@@ -128,6 +128,51 @@ class GenerateDoctrineCrudCommandTest extends GenerateCommandTest
     {
         $container = parent::getContainer();
 
+        $container->set('doctrine', $this->getDoctrine());
+
+        return $container;
+    }
+
+    protected function getBundle()
+    {
+        $bundle = parent::getBundle();
+        $bundle
+            ->expects($this->any())
+            ->method('getNamespace')
+            ->will($this->returnValue('Acme\BlogBundle'))
+        ;
+
+        $bundle
+            ->expects($this->any())
+            ->method('getName')
+            ->will($this->returnValue('AcmeBlogBundle'));
+
+        return $bundle;
+    }
+
+    protected function getDoctrine()
+    {
+        $cache = $this->getMock('Doctrine\Common\Persistence\Mapping\Driver\MappingDriver');
+        $cache
+            ->expects($this->any())
+            ->method('getAllClassNames')
+            ->will($this->returnValue(array('Acme\BlogBundle\Entity\Post')))
+        ;
+
+        $configuration = $this->getMock('Doctrine\ORM\Configuration');
+        $configuration
+            ->expects($this->any())
+            ->method('getMetadataDriverImpl')
+            ->will($this->returnValue($cache))
+        ;
+
+        $manager = $this->getMock('Doctrine\ORM\EntityManagerInterface');
+        $manager
+            ->expects($this->any())
+            ->method('getConfiguration')
+            ->will($this->returnValue($configuration))
+        ;
+
         $registry = $this->getMock('Symfony\Bridge\Doctrine\RegistryInterface');
         $registry
             ->expects($this->any())
@@ -135,8 +180,12 @@ class GenerateDoctrineCrudCommandTest extends GenerateCommandTest
             ->will($this->returnValue('Foo\\FooBundle\\Entity'))
         ;
 
-        $container->set('doctrine', $registry);
+        $registry
+            ->expects($this->any())
+            ->method('getManager')
+            ->will($this->returnValue($manager))
+        ;
 
-        return $container;
+        return $registry;
     }
 }

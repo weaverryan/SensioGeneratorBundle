@@ -154,7 +154,25 @@ EOT
             $input->setOption('entity', $input->getArgument('entity'));
         }
 
-        $entity = $dialog->askAndValidate($output, $dialog->getQuestion('The Entity shortcut name', $input->getOption('entity')), array('Sensio\Bundle\GeneratorBundle\Command\Validators', 'validateEntityName'), false, $input->getOption('entity'));
+        $manager = $this->getContainer()->get('doctrine')->getManager(null);
+
+        $entities = $manager
+            ->getConfiguration()
+            ->getMetadataDriverImpl()
+            ->getAllClassNames()
+        ;
+
+        $bundles = array();
+
+        foreach ($this->getContainer()->get('kernel')->getBundles() as $bundle) {
+            $bundles[$bundle->getNamespace().'\Entity\\'] = $bundle->getName().':';
+        }
+
+        $completion = array_map(function ($entity) use ($bundles) {
+            return strtr($entity, $bundles);
+        }, $entities);
+
+        $entity = $dialog->askAndValidate($output, $dialog->getQuestion('The Entity shortcut name', $input->getOption('entity')), array('Sensio\Bundle\GeneratorBundle\Command\Validators', 'validateEntityName'), false, $input->getOption('entity'), $completion);
         $input->setOption('entity', $entity);
         list($bundle, $entity) = $this->parseShortcutNotation($entity);
 
@@ -212,7 +230,7 @@ EOT
             return false;
         }
 
-	 return true;
+        return true;
     }
 
     protected function updateRouting(DialogHelper $dialog, InputInterface $input, OutputInterface $output, BundleInterface $bundle, $format, $entity, $prefix)
