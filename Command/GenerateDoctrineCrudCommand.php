@@ -154,25 +154,9 @@ EOT
             $input->setOption('entity', $input->getArgument('entity'));
         }
 
-        $manager = $this->getContainer()->get('doctrine')->getManager(null);
+        $bundleSuggestions = $this->generateBundleSuggestions();
 
-        $entities = $manager
-            ->getConfiguration()
-            ->getMetadataDriverImpl()
-            ->getAllClassNames()
-        ;
-
-        $bundles = array();
-
-        foreach ($this->getContainer()->get('kernel')->getBundles() as $bundle) {
-            $bundles[$bundle->getNamespace().'\Entity\\'] = $bundle->getName().':';
-        }
-
-        $completion = array_map(function ($entity) use ($bundles) {
-            return strtr($entity, $bundles);
-        }, $entities);
-
-        $entity = $dialog->askAndValidate($output, $dialog->getQuestion('The Entity shortcut name', $input->getOption('entity')), array('Sensio\Bundle\GeneratorBundle\Command\Validators', 'validateEntityName'), false, $input->getOption('entity'), $completion);
+        $entity = $dialog->askAndValidate($output, $dialog->getQuestion('The Entity shortcut name', $input->getOption('entity')), array('Sensio\Bundle\GeneratorBundle\Command\Validators', 'validateEntityName'), false, $input->getOption('entity'), $bundleSuggestions);
         $input->setOption('entity', $entity);
         list($bundle, $entity) = $this->parseShortcutNotation($entity);
 
@@ -288,6 +272,37 @@ EOT
         }
 
         return $this->formGenerator;
+    }
+
+    protected function generateBundleSuggestions()
+    {
+        $doctrineConfiguration = $this->getContainer()
+            ->get('doctrine')
+            ->getManager(null)
+            ->getConfiguration();
+
+        // array format: 'FooBundle' => 'Acme\FooBundle\Entity'
+        $entityNamespaces = $doctrineConfiguration
+            ->getEntityNamespaces();
+
+        // transform to: 'Acme\FooBundle\Entity\' => 'FooBundle:'
+        $namespaceReplacements = array_map(function ($namespace) {
+            return $namespace.'\\';
+        }, $entityNamespaces);
+        $namespaceReplacements = array_flip($namespaceReplacements);
+        $namespaceReplacements = array_map(function ($bundleName) {
+            return $bundleName.':';
+        }, $namespaceReplacements);
+
+        $entities = $doctrineConfiguration
+            ->getMetadataDriverImpl()
+            ->getAllClassNames()
+        ;
+
+        // loop over the known entity FQN's and string replace them to the alias
+        return array_map(function ($entity) use ($namespaceReplacements) {
+            return strtr($entity, $namespaceReplacements);
+        }, $entities);
     }
 
     public function setFormGenerator(DoctrineFormGenerator $formGenerator)
