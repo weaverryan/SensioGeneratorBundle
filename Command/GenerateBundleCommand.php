@@ -392,13 +392,21 @@ EOT
         // add trailing / if necessary
         $dir = '/' === substr($dir, -1, 1) ? $dir : $dir.'/';
 
-        return new Bundle(
+        $bundle = new Bundle(
             $namespace,
             $bundleName,
             $dir,
             $format,
             $shared
         );
+
+        // not shared - put the tests in the root
+        if (!$shared) {
+            $testsDir = getcwd().'/tests/'.$bundleName;
+            $bundle->setTestsDirectory($testsDir);
+        }
+
+        return $bundle;
     }
 
     protected function createGenerator()
