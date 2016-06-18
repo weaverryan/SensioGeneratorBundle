@@ -18,6 +18,13 @@ use Symfony\Component\DependencyInjection\Container;
 
 abstract class GenerateCommandTest extends \PHPUnit_Framework_TestCase
 {
+    protected $kernelRootDir;
+
+    public function setup()
+    {
+        $this->kernelRootDir = sys_get_temp_dir();
+    }
+
     protected function getHelperSet($input)
     {
         $question = new QuestionHelper();
@@ -72,7 +79,7 @@ abstract class GenerateCommandTest extends \PHPUnit_Framework_TestCase
         $container->set('kernel', $kernel);
         $container->set('filesystem', $filesystem);
 
-        $container->setParameter('kernel.root_dir', sys_get_temp_dir());
+        $container->setParameter('kernel.root_dir', $this->kernelRootDir);
 
         return $container;
     }

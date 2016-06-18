@@ -25,9 +25,8 @@ class GenerateBundleCommandTest extends GenerateCommandTest
         $bundle = new Bundle($namespace, $bundleName, $dir, $format, $shared);
 
         // not shared? the tests should be at the root of the project
-        // which, is cheaply done with getcwd
         if (!$shared) {
-            $bundle->setTestsDirectory(getcwd().'/tests/'.$bundleName);
+            $bundle->setTestsDirectory($this->kernelRootDir.'/../tests/'.$bundleName);
         }
 
         $generator = $this->getGenerator();
@@ -82,9 +81,8 @@ class GenerateBundleCommandTest extends GenerateCommandTest
         $bundle = new Bundle($namespace, $bundleName, $dir, $format, $shared);
 
         // not shared? the tests should be at the root of the project
-        // which, is cheaply done with getcwd
         if (!$shared) {
-            $bundle->setTestsDirectory(getcwd().'/tests/'.$bundleName);
+            $bundle->setTestsDirectory($this->kernelRootDir.'/../tests/'.$bundleName);
         }
 
         $generator = $this->getGenerator();
